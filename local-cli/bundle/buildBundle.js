@@ -4,7 +4,6 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @format
  * @flow
  */
 
@@ -14,7 +13,10 @@ const log = require('../util/log').out('bundle');
 /* $FlowFixMe(site=react_native_oss) */
 const Server = require('metro/src/Server');
 const {Terminal} = require('metro-core');
+/* $FlowFixMe(site=react_native_oss) */
 const TerminalReporter = require('metro/src/lib/TerminalReporter');
+/* $FlowFixMe(site=react_native_oss) */
+const TransformCaching = require('metro/src/lib/TransformCaching');
 
 const {defaults} = require('metro');
 /* $FlowFixMe(site=react_native_oss) */
@@ -75,8 +77,8 @@ async function buildBundle(
       : defaultProvidesModuleNodeModules;
 
   const terminal = new Terminal(process.stdout);
+
   const server = new Server({
-    asyncRequireModulePath: config.getAsyncRequireModulePath(),
     assetExts: defaultAssetExts.concat(assetExts),
     assetRegistryPath: ASSET_REGISTRY_PATH,
     blacklistRE: config.getBlacklistRE(),
@@ -87,23 +89,22 @@ async function buildBundle(
     extraNodeModules: config.extraNodeModules,
     getModulesRunBeforeMainModule: config.getModulesRunBeforeMainModule,
     getPolyfills: config.getPolyfills,
-    getResolverMainFields: config.getResolverMainFields,
-    getRunModuleStatement: config.getRunModuleStatement,
     getTransformOptions: config.getTransformOptions,
+    globalTransformCache: null,
     hasteImplModulePath: config.hasteImplModulePath,
     maxWorkers: args.maxWorkers,
     platforms: defaultPlatforms.concat(platforms),
     postMinifyProcess: config.postMinifyProcess,
+    postProcessModules: config.postProcessModules,
     postProcessBundleSourcemap: config.postProcessBundleSourcemap,
-    projectRoot: config.getProjectRoot(),
+    projectRoots: config.getProjectRoots(),
     providesModuleNodeModules: providesModuleNodeModules,
-    reporter: new TerminalReporter(terminal),
     resetCache: args.resetCache,
-    resolveRequest: config.resolveRequest,
+    reporter: new TerminalReporter(terminal),
     sourceExts: sourceExts.concat(defaultSourceExts),
+    transformCache: TransformCaching.useTempDir(),
     transformModulePath: transformModulePath,
     watch: false,
-    watchFolders: config.getWatchFolders(),
     workerPath: config.getWorkerPath && config.getWorkerPath(),
   });
 
@@ -119,7 +120,11 @@ async function buildBundle(
   });
 
   // When we're done saving bundle output and the assets, we're done.
-  const assets = await saveAssets(outputAssets, args.platform, args.assetsDest);
+  const assets = await saveAssets(
+    outputAssets,
+    args.platform,
+    args.assetsDest,
+  );
 
   server.end();
 

@@ -78,7 +78,7 @@ import com.facebook.infer.annotation.Assertions;
   }
 
   /* package */ void freeze() {
-    mFrozen = true;
+    mFrozen = false;
   }
 
   /* package */ boolean isFrozen() {
